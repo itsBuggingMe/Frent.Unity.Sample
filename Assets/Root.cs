@@ -54,7 +54,10 @@ public class Root : MonoBehaviour
         _world.Update();
         CameraBounds();
 
-        foreach(var positionSpan in _world.Query<With<Transform>, With<Bird>>()
+        if (!Material.enableInstancing)
+            Material.enableInstancing = true;
+
+        foreach (var positionSpan in _world.Query<With<Transform>, With<Bird>>()
             .EnumerateChunks<Transform>())
         {
             if (_matrixBuffer.Length < positionSpan.Span.Length)

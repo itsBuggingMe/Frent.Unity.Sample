@@ -4,10 +4,6 @@ using Frent.Components;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using UnityEditor.Profiling;
-using Unity.VisualScripting;
-using static UnityEngine.RuleTile.TilingRuleOutput;
-using UnityEngine.UIElements;
 
 namespace Components
 {

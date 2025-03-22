@@ -1,9 +1,10 @@
-﻿using SpatialHash = System.Collections.Generic.Dictionary<(int, int), System.Collections.Generic.List<Frent.Entity>>;
+﻿using SpatialHash = System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<Frent.Entity>>;
 using Frent;
 using Frent.Components;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using System.Drawing;
 
 namespace Components
 {
@@ -19,14 +20,14 @@ namespace Components
         private static readonly (int DX, int DY)[] Centering = CalculateDeltaTable(FlockCenteringRadius);
 
         private Entity _self;
-        private (int X, int Y) _previous;
+        private int _previous;
 
         public void Init(Entity self)
         {
             _self = self;
             ref var transform = ref self.Get<Transform>();
             var spaitial = self.World.UniformProvider.GetUniform<SpatialHash>();
-            _previous = ((int)transform.XY.x, (int)transform.XY.y);
+            _previous = PackCoordinates((int)transform.XY.x, (int)transform.XY.y);
             if (!spaitial.ContainsKey(_previous))
                 spaitial[_previous] = new();
         }
@@ -37,13 +38,15 @@ namespace Components
 
             Vector2 pos = transform.XY;
             (int X, int Y) current = ((int)(pos.x / BlockSection), (int)(pos.y / BlockSection));
+            int currentPacked = PackCoordinates(current.X, current.Y);
 
             Vector2 cumulativeVelocity = default;
             Vector2? deltaToClosest = null;
 
             foreach(var delta in Detection)
             {
-                foreach(var entity in GetChunkData(space, Add(current, delta)))
+                (int X, int Y) adjCoordinates = Add(current, delta);
+                foreach (var entity in GetChunkData(space, PackCoordinates(adjCoordinates.X, adjCoordinates.Y)))
                 {
                     if (entity == _self)
                         continue;
@@ -72,7 +75,8 @@ namespace Components
 
             foreach (var delta in Centering)
             {
-                foreach (var entity in GetChunkData(space, Add(current, delta)))
+                (int X, int Y) adjCoordinates = Add(current, delta);
+                foreach (var entity in GetChunkData(space, PackCoordinates(adjCoordinates.X, adjCoordinates.Y)))
                 {
                     if (entity == _self)
                         continue;
@@ -88,11 +92,11 @@ namespace Components
 
             AlignVelocity(ref vel, deltaToAvgLocation, root.FlockCenteringMultipler);
 
-            if (current != _previous)
+            if (currentPacked != _previous)
             {
                 space[_previous].Remove(_self);
-                space[current].Add(_self);
-                _previous = current;
+                space[currentPacked].Add(_self);
+                _previous = currentPacked;
             }
         }
 
@@ -123,14 +127,14 @@ namespace Components
             selfVel.Delta = RotateVector(selfVel.Delta, multipler * -Math.Sign(cross));
         }
 
-        private static List<Entity> GetChunkData(SpatialHash hash, (int, int) coord)
+        private static List<Entity> GetChunkData(SpatialHash hash, int coordPacked)
         {
-            if(hash.TryGetValue(coord, out var list))
+            if(hash.TryGetValue(coordPacked, out var list))
             {
                 return list;
             }
 
-            return hash[coord] = new();
+            return hash[coordPacked] = new();
         }
 
         private static (int X, int Y) Add((int X, int Y) l, (int X, int Y) r)
@@ -163,6 +167,11 @@ namespace Components
             float sin = MathF.Sin(radians);
 
             return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
+        }
+
+        private static int PackCoordinates(int x, int y)
+        {
+            return x << 16 | y;
         }
     }
 }

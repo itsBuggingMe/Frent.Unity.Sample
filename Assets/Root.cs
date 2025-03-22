@@ -1,4 +1,4 @@
-using SpatialHash = System.Collections.Generic.Dictionary<(int, int), System.Collections.Generic.List<Frent.Entity>>;
+using SpatialHash = System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<Frent.Entity>>;
 using Frent;
 using Frent.Systems;
 using UnityEngine;
